@@ -8,3 +8,7 @@ Then activate the new environment:
 
 If you need to update the environment, run:
 ```conda env update --file environment.yml --prune```
+
+## Attribution
+"Rubberduckie" model by aerojockey via opengameart.
+https://opengameart.org/content/rubber-duckie
