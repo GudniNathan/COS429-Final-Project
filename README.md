@@ -12,3 +12,14 @@ If you need to update the environment, run:
 ## Attribution
 "Rubberduckie" model by aerojockey via opengameart.
 https://opengameart.org/content/rubber-duckie
+
+
+extract SIFT keypoints
+match
+find essential matrix
+extract pose
+
+stereoRectify
+extract depth from stereo image
+feature matching (find 3d points)
+Perspective-n-Point, to find camera pose

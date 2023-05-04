@@ -12,6 +12,7 @@ from objloader import *
 import sys
 from dataclasses import dataclass, asdict
 import glfw
+import cv2
 
 
 @dataclass
@@ -131,11 +132,17 @@ def draw(camera: Camera, obj, window, clock, frame=None):
         glClear(GL_DEPTH_BUFFER_BIT)
 
     glLoadIdentity()
-
+    rot = cv2.Rodrigues(camera.rotation)[0]
+    axis = [rot[2][1] - rot[1][2], rot[0][2] - rot[2][0], rot[1][0] - rot[0][1]]
+    if np.linalg.norm(axis) != 0:
+        axis = axis / np.linalg.norm(axis)
+    angle = np.arccos((np.trace(rot) - 1) / 2)
     # RENDER OBJECT
-    glTranslate(camera.tx, camera.ty, -camera.tz)
-    glRotate(camera.ry, 1, 0, 0)
-    glRotate(camera.rx, 0, 1, 0)
+    pos = ((camera.position.T / 10) + [0, -10, 0])[0]
+    # swap y and z
+    pos[1], pos[2] = pos[2], pos[1]
+    glTranslate(*pos.T) # TODO: fix this
+    glRotate(angle * 180 / np.pi, *axis)
     glCallList(obj.gl_list)
 
     glfw.swap_buffers(window) # draw the current frame

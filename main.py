@@ -17,7 +17,10 @@ import rasterize
 
 def main():
     # clear the images folder
-    shutil.rmtree(IMAGES_FOLDER)
+    try:
+        shutil.rmtree(IMAGES_FOLDER)
+    except:
+        pass
     os.mkdir(IMAGES_FOLDER)
 
 
@@ -61,8 +64,8 @@ def main():
 
 
         # Combine the rotation and translation
-        total_Rotation = total_Rotation @ R
-        total_Translation = total_Translation + t
+        R = cv2.Rodrigues(R)[0]
+        cv2.composeRT(total_Rotation, total_Translation, R, t, total_Rotation, total_Translation)
 
         # Update the position and rotation of the object
         object_transform.position = total_Translation

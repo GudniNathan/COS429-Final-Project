@@ -14,9 +14,7 @@ SKIP_START = 3
 
 # The position of the 3d object, relative to the camera at frame 0.
 # Note that the camera is at (0, 0, 0) and is looking at (0, 0, -1).
-OBJECT_POSITION = (0, 0, -5)
+OBJECT_POSITION = (0., 0., -5.)
 
 # The rotation of the 3d object, relative to the camera at frame 0.
-OBJECT_ROTATION = [[1, 0, 0],
-                    [0, 1, 0],
-                    [0, 0, 1]]
+OBJECT_ROTATION = [0., 0., 0.]

@@ -65,7 +65,7 @@ def calibrate(image1, image2, focal_length=300.0, principal_point=(400.0, 300.0)
 
     # Triangulate points
     projMatr = np.hstack((np.identity(3), np.zeros((3, 1))))
-    points4D = cv2.triangulatePoints(projMatr, projMatr, points1, points2)
+    # points4D = cv2.triangulatePoints(projMatr, projMatr, points1, points2)
 
     return R, t
 
