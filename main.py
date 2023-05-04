@@ -33,7 +33,7 @@ def main():
     video_resolution = np.array(video_resolution)
     video_frame_count = int(ffmpeg.probe(VIDEO_FILE_PATH)['streams'][0]['nb_frames'])
 
-    frame_number = 0
+    frame_number = SKIP_START
     # Load the first frame of the video
     image1 = cv2.imread(f'{IMAGES_FOLDER}/image{frame_number}.png', cv2.IMREAD_GRAYSCALE)
     
@@ -49,7 +49,7 @@ def main():
     # Draw the first frame
     rasterize.draw(object_transform, obj, window, clock, image1)
 
-    for i in range(SKIP_START, video_frame_count, SKIP_FRAMES):
+    for i in range(SKIP_START + 1, video_frame_count, SKIP_FRAMES):
         frame_number = i
         # Load the next frame of the video
         image2 = cv2.imread(f'{IMAGES_FOLDER}/image{frame_number}.png', cv2.IMREAD_GRAYSCALE)
@@ -77,6 +77,8 @@ def main():
 
         # Load the next frame of the video
         image1 = image2
+    
+    shutil.rmtree(IMAGES_FOLDER)
 
 
 if __name__ == "__main__":

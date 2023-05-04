@@ -10,7 +10,7 @@ IMAGES_FOLDER = "images"
 SKIP_FRAMES = 1
 
 # The number of frames to skip at the beginning of the video.
-SKIP_START = 0
+SKIP_START = 3
 
 # The position of the 3d object, relative to the camera at frame 0.
 # Note that the camera is at (0, 0, 0) and is looking at (0, 0, -1).

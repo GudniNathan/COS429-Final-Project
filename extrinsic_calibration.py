@@ -62,14 +62,11 @@ def calibrate(image1, image2, focal_length=300.0, principal_point=(400.0, 300.0)
     E = cv2.findEssentialMat(points1, points2, focal_length, principal_point, cv2.RANSAC, 0.999, 1.0)[0]
 
     retval, R, t, mask = cv2.recoverPose(E, points1, points2, focal=focal_length, pp=principal_point)
-    # print(R)
-    # print(t)
-    # print(retval)
-    # print(np.linalg.norm(t))
-    # img3 = cv2.drawMatchesKnn(image1,kp1,image2,kp2,good,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
-    # plt.imshow(img3),plt.show()
 
-    # return the calibration matrix
+    # Triangulate points
+    projMatr = np.hstack((np.identity(3), np.zeros((3, 1))))
+    points4D = cv2.triangulatePoints(projMatr, projMatr, points1, points2)
+
     return R, t
 
 def main():
