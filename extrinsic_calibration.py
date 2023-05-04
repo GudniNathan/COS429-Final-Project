@@ -53,7 +53,7 @@ def calibrate(image1, image2, focal_length=300.0, principal_point=(400.0, 300.0)
     points1 = np.float32([kp1[m[0].queryIdx].pt for m in good])
     points2 = np.float32([kp2[m[0].trainIdx].pt for m in good])
     
-    mat, mask = cv2.findFundamentalMat(points1, points2, cv2.FM_RANSAC)
+    # mat, mask = cv2.findFundamentalMat(points1, points2, cv2.FM_RANSAC)
 
     # intrinsic_matrix = np.array([[focal_length, 0, principal_point[0]],
     #                              [0, focal_length, principal_point[1]],
