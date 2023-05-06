@@ -70,7 +70,6 @@ def main():
         # Update the position and rotation of the object
         object_transform.position = total_Translation
         object_transform.rotation = total_Rotation
-        total_Translation = np.array([0., 0., 0.])[:, np.newaxis]
 
         # Print the rotation and translation
         print(f"Rotation: {total_Rotation}")

@@ -132,19 +132,19 @@ def draw(camera: Camera, obj, window, clock, frame=None):
         glClear(GL_DEPTH_BUFFER_BIT)
 
     glLoadIdentity()
-    rot = cv2.Rodrigues(camera.rotation)[0]
-    axis = [rot[2][1] - rot[1][2], rot[0][2] - rot[2][0], rot[1][0] - rot[0][1]]
-    if np.linalg.norm(axis) != 0:
-        axis = axis / np.linalg.norm(axis)
-    angle = np.arccos((np.trace(rot) - 1) / 2)
+    rotation_vector = np.array([camera.rotation[0], -camera.rotation[1], -camera.rotation[2]])
+    rot = cv2.Rodrigues(rotation_vector)[0]
+    # Make the rotation matrix homogeneous
+    rot = np.concatenate((rot, np.zeros((1, 3))), axis=0)
+    rot = np.concatenate((rot, np.zeros((4, 1))), axis=1)
+    rot[3, 3] = 1
+    rot = np.linalg.inv(rot) # Same as transpose for rotation matrices
 
     # RENDER OBJECT
-    pos = ((-camera.position.T / 5) + [0, 0, -10])[0]
-    # swap y and z
-    # pos[1], pos[2] = pos[2], pos[1]
-    glRotate(angle * 180 / np.pi, *axis)
-    # glTranslate(*pos.T) # TODO: fix this
-    glTranslate(*[0, 0, -20]) # TODO: fix this
+    pos = -camera.position.T / 5
+    glMultMatrixd(rot) # Rotate object
+    glTranslate(0, 0, -20) # Move object away from camera
+    glTranslate(*pos.T) # TODO: fix this
     glCallList(obj.gl_list)
 
     glfw.swap_buffers(window) # draw the current frame
