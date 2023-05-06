@@ -44,7 +44,7 @@ def main():
     total_Translation = np.array(OBJECT_POSITION)[:, np.newaxis]
 
     # Initialize rasterizer module
-    window, obj, clock, object_transform = rasterize.init(300, video_resolution//2, video_resolution)
+    window, obj, clock, object_transform = rasterize.init(CAMERA_FOCAL_LENGTH, CAMERA_PRINCIPAL_POINT, video_resolution)
     object_transform.tz = 5
     object_transform.position = total_Translation
     object_transform.rotation = total_Rotation
@@ -60,7 +60,7 @@ def main():
             break
 
         # calibrate the images
-        R, t = calibrate(image1, image2)
+        R, t = calibrate(image1, image2, focal_length=CAMERA_FOCAL_LENGTH, principal_point=CAMERA_PRINCIPAL_POINT)
 
 
         # Combine the rotation and translation
@@ -70,6 +70,7 @@ def main():
         # Update the position and rotation of the object
         object_transform.position = total_Translation
         object_transform.rotation = total_Rotation
+        total_Translation = np.array([0., 0., 0.])[:, np.newaxis]
 
         # Print the rotation and translation
         print(f"Rotation: {total_Rotation}")

@@ -126,7 +126,7 @@ def draw(camera: Camera, obj, window, clock, frame=None):
         glWindowPos2i(0, 0)
         window_size = glfw.get_window_size(window)
         frame = np.flip(frame, axis=0)
-        frame = np.concatenate((frame, np.zeros((frame.shape[0], 1), dtype=np.uint8)), axis=1)
+        # frame = np.concatenate((frame, np.zeros((frame.shape[0], 1), dtype=np.uint8)), axis=1)
         glDrawPixels(*window_size, GL_LUMINANCE, GL_UNSIGNED_BYTE, frame)
         # clear the depth buffer so that the frame is not occluded
         glClear(GL_DEPTH_BUFFER_BIT)
@@ -137,12 +137,14 @@ def draw(camera: Camera, obj, window, clock, frame=None):
     if np.linalg.norm(axis) != 0:
         axis = axis / np.linalg.norm(axis)
     angle = np.arccos((np.trace(rot) - 1) / 2)
+
     # RENDER OBJECT
-    pos = ((camera.position.T / 10) + [0, -10, 0])[0]
+    pos = ((-camera.position.T / 5) + [0, 0, -10])[0]
     # swap y and z
-    pos[1], pos[2] = pos[2], pos[1]
-    glTranslate(*pos.T) # TODO: fix this
+    # pos[1], pos[2] = pos[2], pos[1]
     glRotate(angle * 180 / np.pi, *axis)
+    # glTranslate(*pos.T) # TODO: fix this
+    glTranslate(*[0, 0, -20]) # TODO: fix this
     glCallList(obj.gl_list)
 
     glfw.swap_buffers(window) # draw the current frame

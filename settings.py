@@ -1,13 +1,20 @@
 
 # This file contains all the settings.
 # Update this file to change the settings of the program.
-VIDEO_FILE_PATH = "videos/minecraft_1.mp4"
-OUTPUT_FILE_PATH = "output/minecraft_1.mp4"
+VIDEO_FILE_PATH = "videos/minecraft_3.mp4"
+OUTPUT_FILE_PATH = "output/minecraft_2.mp4"
 
 IMAGES_FOLDER = "images"
 
+# CAMERA_FOCAL_LENGTH = 525
+# CAMERA_PRINCIPAL_POINT = (319.5, 239.5)
+
+CAMERA_FOCAL_LENGTH = 200
+CAMERA_PRINCIPAL_POINT = (426, 240)
+
+
 # The number of frames to skip between each frame.
-SKIP_FRAMES = 1
+SKIP_FRAMES = 3
 
 # The number of frames to skip at the beginning of the video.
 SKIP_START = 3
