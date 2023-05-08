@@ -162,7 +162,7 @@ def draw(camera: Camera, obj, window, clock, frame=None, quaternion=None):
     glfw.swap_buffers(window) # draw the current frame
 
     width, height = glfw.get_window_size(window)
-    screenshot = glReadPixels(0,0,width,height,GL_RGB,GL_UNSIGNED_BYTE)
+    screenshot = glReadPixels(0,0,width,height,GL_BGR,GL_UNSIGNED_BYTE)
     # glReadBuffer(GL_BACK)
     snapshot = Image.frombuffer("RGB",(width,height),screenshot,"raw", "RGB", 0, 0)
     snapshot = np.array(snapshot)
