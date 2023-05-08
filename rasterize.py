@@ -146,7 +146,6 @@ def draw(camera: Camera, obj, window, clock, frame=None, quaternion=None):
         rot = rotation_vector_to_matrix(camera.rotation)
     rot = np.linalg.inv(rot)
 
-
     from itertools import product
     for i, j, k in product([-2, -1, 0, 1, 2], repeat=3):
         # RENDER OBJECT
@@ -163,10 +162,8 @@ def draw(camera: Camera, obj, window, clock, frame=None, quaternion=None):
     glfw.swap_buffers(window) # draw the current frame
 
     width, height = glfw.get_window_size(window)
-    #Read frame:
-    glReadBuffer(GL_BACK)
     screenshot = glReadPixels(0,0,width,height,GL_RGB,GL_UNSIGNED_BYTE)
-    #Convert from binary to cv2 numpy array:
+    # glReadBuffer(GL_BACK)
     snapshot = Image.frombuffer("RGB",(width,height),screenshot,"raw", "RGB", 0, 0)
     snapshot = np.array(snapshot)
     snapshot = cv2.flip(snapshot,0)

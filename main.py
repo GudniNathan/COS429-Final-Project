@@ -57,7 +57,7 @@ def main():
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     width, height = glfw.get_window_size(window)
-    if !os.path.exists(os.path.dirname(OUTPUT_FILE_PATH)):
+    if not os.path.exists(os.path.dirname(OUTPUT_FILE_PATH)):
         os.mkdir(os.path.dirname(OUTPUT_FILE_PATH))
     out = cv2.VideoWriter(OUTPUT_FILE_PATH,fourcc, 20.0, (width,height))
 
@@ -93,6 +93,7 @@ def main():
         # Draw the object
         snapshot = rasterize.draw(camera, obj, window, clock, image2_resized)
         out.write(snapshot)
+        # cv2.imwrite("test.jpg", snapshot)
 
         # Load the next frame of the video
         image1 = image2
