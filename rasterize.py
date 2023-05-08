@@ -8,35 +8,80 @@ import pygame
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
-from objloader import *
+from tools.objloader import *
 import sys
 from dataclasses import dataclass, asdict
 import glfw
 import cv2
 
+from settings import *
+
 
 @dataclass
 class Camera:
-    rx: float
-    ry: float
-    tx: float
-    ty: float
-    tz: float
-
-    def update(self, new):
-        for key, value in new.items():
-            if hasattr(self, key):
-                setattr(self, key, value)
+    rotation: np.ndarray = None
+    position: np.ndarray = None
 
 @dataclass
 class Control:
     rotate: bool
     move: bool
 
+def rotation_vector_to_matrix(rotation_vector):
+    rotation_vector = np.array([-rotation_vector[0], -rotation_vector[1], -rotation_vector[2]])
+    rot = cv2.Rodrigues(rotation_vector)[0]
+    # Make the rotation matrix homogeneous
+    rot = np.concatenate((rot, np.zeros((1, 3))), axis=0)
+    rot = np.concatenate((rot, np.zeros((4, 1))), axis=1)
+    rot[3, 3] = 1
+    return rot
+
+def quaternion_to_matrix(q):
+    """
+    Convert a quaternion to a 4x4 homogeneous rotation matrix.
+
+    :param q: A 4-element array representing the quaternion in the form [w, x, y, z].
+    :return: A 4x4 numpy array representing the rotation matrix.
+    """
+
+    # Normalize the quaternion
+    # q /= np.linalg.norm(q)
+
+    # Extract the components of the quaternion
+    x, y, z, w = q
+
+    # Compute the elements of the rotation matrix
+    m11 = 1 - 2 * (y**2 + z**2)
+    m12 = 2 * (x*y - w*z)
+    m13 = 2 * (x*z + w*y)
+    m14 = 0
+
+    m21 = 2 * (x*y + w*z)
+    m22 = 1 - 2 * (x**2 + z**2)
+    m23 = 2 * (y*z - w*x)
+    m24 = 0
+
+    m31 = 2 * (x*z - w*y)
+    m32 = 2 * (y*z + w*x)
+    m33 = 1 - 2 * (x**2 + y**2)
+    m34 = 0
+
+    m41 = 0
+    m42 = 0
+    m43 = 0
+    m44 = 1
+
+    # Return the rotation matrix
+    return np.array([[m11, m12, m13, m14],
+                     [m21, m22, m23, m24],
+                     [m31, m32, m33, m34],
+                     [m41, m42, m43, m44]])
+
+
 def init(focal_distance, principal_point, video_size=(800, 600)):
     glfw.init()
     viewport = video_size
-    # glfw.window_hint(glfw.SAMPLES, 4)
+    glfw.window_hint(glfw.SAMPLES, 4)
     clock = pygame.time.Clock()
     window = glfw.create_window(*viewport, "OpenGL window", None, None)
     if not window:
@@ -72,50 +117,11 @@ def init(focal_distance, principal_point, video_size=(800, 600)):
     print(fov)
     gluPerspective(fov, width/float(height), 1, 100.0) # intrinsic camera params
     glMatrixMode(GL_MODELVIEW)
-    return window, obj, clock, Camera(0,0,0,0,0)
+    return window, obj, clock, Camera()
 
-def main():
-    window, obj, clock, camera = init(300, (400, 300), (800, 600))
-    z_dist = 20
-    camera = Camera(0, 0, 0, 0, z_dist)
-    control = Control(False, False)
-    path = [Camera(0, 0, 0, n//100 - 2, 5) for n in range(0, 500)]
-    path.reverse()
-    while not glfw.window_should_close(window):
-        handle_events(camera, control, path)
-        draw(camera, obj, window, clock)
-    glfw.terminate()
-
-
-def handle_events(camera: Camera, control: Control, path: list):
-    if len(path) == 0:
-        sys.exit()
-    camera.update(asdict(path[-1]))
-    path.pop()
-    # for e in pygame.event.get():
-    #     if e.type == QUIT:
-    #         sys.exit()
-    #     elif e.type == KEYDOWN and e.key == K_ESCAPE:
-    #         sys.exit()
-        # elif e.type == MOUSEBUTTONDOWN:
-        #     if e.button == 4: camera.zpos = max(1, camera.zpos-1)
-        #     elif e.button == 5: camera.zpos += 1
-        #     elif e.button == 1: control.rotate = True
-        #     elif e.button == 3: control.move = True
-        # elif e.type == MOUSEBUTTONUP:
-        #     if e.button == 1: control.rotate = False
-        #     elif e.button == 3: control.move = False
-        # elif e.type == MOUSEMOTION:
-        #     i, j = e.rel
-        #     if control.rotate:
-        #         camera.rx += i
-        #         camera.ry += j
-        #     if control.move:
-        #         camera.tx += i / 20.
-        #         camera.ty -= j / 20.
-
-
-def draw(camera: Camera, obj, window, clock, frame=None):
+first_rot = None
+def draw(camera: Camera, obj, window, clock, frame=None, quaternion=None):
+    global first_rot
     glfw.poll_events()
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -131,24 +137,26 @@ def draw(camera: Camera, obj, window, clock, frame=None):
         # clear the depth buffer so that the frame is not occluded
         glClear(GL_DEPTH_BUFFER_BIT)
 
-    glLoadIdentity()
-    rotation_vector = np.array([camera.rotation[0], -camera.rotation[1], -camera.rotation[2]])
-    rot = cv2.Rodrigues(rotation_vector)[0]
-    # Make the rotation matrix homogeneous
-    rot = np.concatenate((rot, np.zeros((1, 3))), axis=0)
-    rot = np.concatenate((rot, np.zeros((4, 1))), axis=1)
-    rot[3, 3] = 1
-    rot = np.linalg.inv(rot) # Same as transpose for rotation matrices
 
-    # RENDER OBJECT
-    pos = -camera.position.T / 5
-    glMultMatrixd(rot) # Rotate object
-    glTranslate(0, 0, -20) # Move object away from camera
-    glTranslate(*pos.T) # TODO: fix this
-    glCallList(obj.gl_list)
+    if quaternion:
+        rot = quaternion_to_matrix(quaternion)
+    else:
+        rot = rotation_vector_to_matrix(camera.rotation)
+    rot = np.linalg.inv(rot)
+
+
+    from itertools import product
+    for i, j, k in product([-2, -1, 0, 1, 2], repeat=3):
+        # RENDER OBJECT
+        glLoadIdentity()
+        # if i == j == k == 0:
+        #     continue
+        pos = -camera.position.T
+        glMultMatrixd(rot) # Rotate object
+        glTranslate(OBJECT_POSITION[0] * i, OBJECT_POSITION[1] * j, OBJECT_POSITION[2] * k) # Move object away from camera
+        # glTranslate(*OBJECT_POSITION ) # Move object away from camera
+        glTranslate(*pos.T) # TODO: fix this
+        glCallList(obj.gl_list)
 
     glfw.swap_buffers(window) # draw the current frame
     clock.tick(60) # limit to 60 fps
-
-if __name__ == '__main__':
-    main()

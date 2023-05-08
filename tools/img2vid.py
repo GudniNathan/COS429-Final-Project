@@ -3,8 +3,8 @@ import os
 import shutil
 import ffmpeg
 
-IMAGES_FOLDER = "images"
-OUTPUT_FOLDER = "videos"
+IMAGES_FOLDER = "../images"
+OUTPUT_FOLDER = "../videos"
 
 # Create the output folder if it doesn't exist
 if not os.path.exists(OUTPUT_FOLDER):
