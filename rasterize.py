@@ -13,6 +13,7 @@ import sys
 from dataclasses import dataclass, asdict
 import glfw
 import cv2
+from PIL import Image
 
 from settings import *
 
@@ -160,4 +161,16 @@ def draw(camera: Camera, obj, window, clock, frame=None, quaternion=None):
         glCallList(obj.gl_list)
 
     glfw.swap_buffers(window) # draw the current frame
+
+    width, height = glfw.get_window_size(window)
+    #Read frame:
+    glReadBuffer(GL_BACK)
+    screenshot = glReadPixels(0,0,width,height,GL_RGB,GL_UNSIGNED_BYTE)
+    #Convert from binary to cv2 numpy array:
+    snapshot = Image.frombuffer("RGB",(width,height),screenshot,"raw", "RGB", 0, 0)
+    snapshot = np.array(snapshot)
+    snapshot = cv2.flip(snapshot,0)
+
     clock.tick(60) # limit to 60 fps
+
+    return snapshot
