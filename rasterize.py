@@ -135,7 +135,7 @@ def draw(camera: Camera, obj, window, clock, frame=None, quaternion=None):
         buffer_size = glfw.get_framebuffer_size(window)
         frame = np.flip(frame, axis=0)
         # frame = np.concatenate((frame, np.zeros((frame.shape[0], 1), dtype=np.uint8)), axis=1)
-        glDrawPixels(*buffer_size, GL_LUMINANCE, GL_UNSIGNED_BYTE, frame)
+        glDrawPixels(*buffer_size, GL_BGR, GL_UNSIGNED_BYTE, frame)
         # clear the depth buffer so that the frame is not occluded
         glClear(GL_DEPTH_BUFFER_BIT)
 

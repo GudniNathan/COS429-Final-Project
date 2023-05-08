@@ -42,7 +42,7 @@ def main():
 
     frame_number = SKIP_START
     # Load the first frame of the video
-    image1 = cv2.imread(f'{IMAGES_FOLDER}/image{frame_number}.png', cv2.IMREAD_GRAYSCALE)
+    image1 = cv2.imread(f'{IMAGES_FOLDER}/image{frame_number}.png', cv2.IMREAD_COLOR)
     
     total_Rotation = np.array(OBJECT_ROTATION)
     total_Translation = np.array(OBJECT_POSITION)[:, np.newaxis]
@@ -68,7 +68,7 @@ def main():
     for i in range(SKIP_START + 1, video_frame_count, SKIP_FRAMES):
         frame_number = i
         # Load the next frame of the video
-        image2 = cv2.imread(f'{IMAGES_FOLDER}/image{frame_number}.png', cv2.IMREAD_GRAYSCALE)
+        image2 = cv2.imread(f'{IMAGES_FOLDER}/image{frame_number}.png', cv2.IMREAD_COLOR)
         if image2 is None:
             break
 

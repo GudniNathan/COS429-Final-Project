@@ -74,6 +74,8 @@ def calibrate(image1, image2, focal_length=300.0, principal_point=(400.0, 300.0)
     # Do stereo calibration
     # retval, intrinsic_matrix, distCoeffs, rvecs, tvecs = cv2.calibrateCamera([points1], [points2], image1.shape[::-1], None, None)
 
+    image1 = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
+    image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
 
     # Stereo rectify the images
     R1, R2, P1, P2, Q, roi1, roi2 = cv2.stereoRectify(intrinsic_matrix, np.zeros((5, 1)), intrinsic_matrix, np.zeros((5, 1)), image1.shape[::-1], R, t, alpha=0.0)
