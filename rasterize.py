@@ -23,10 +23,7 @@ class Camera:
     rotation: np.ndarray = None
     position: np.ndarray = None
 
-@dataclass
-class Control:
-    rotate: bool
-    move: bool
+buffer_size = None
 
 def rotation_vector_to_matrix(rotation_vector):
     rotation_vector = np.array([-rotation_vector[0], -rotation_vector[1], -rotation_vector[2]])
@@ -78,14 +75,28 @@ def quaternion_to_matrix(q):
                      [m31, m32, m33, m34],
                      [m41, m42, m43, m44]])
 
+def window_update(window, width, height):
+    global buffer_size
+    # Round width, height up to the nearest multiple of 4
+    if width % 4 != 0 or height % 4 != 0:
+        width = width + (4 - width % 4) % 4
+        height = height + (4 - height % 4) % 4
+        glfw.set_window_size(window, width, height)
+
+    buffer_size = glfw.get_framebuffer_size(window)
+    glViewport(0, 0, width, height)
 
 def init(focal_distance, principal_point, video_size=(800, 600)):
+    global buffer_size
     glfw.init()
     viewport = video_size
     glfw.window_hint(glfw.SAMPLES, 4)
     clock = pygame.time.Clock()
     window = glfw.create_window(*viewport, "OpenGL window", None, None)
-    framebuffer_size = glfw.get_framebuffer_size(window)
+    glfw.set_window_close_callback(
+        window, lambda x: glfw.set_window_should_close(window, True))
+    glfw.set_window_size_callback(window, window_update)
+    buffer_size = glfw.get_framebuffer_size(window)
     if not window:
         glfw.terminate()
         print("GLFW window creation failed")
@@ -116,25 +127,28 @@ def init(focal_distance, principal_point, video_size=(800, 600)):
     width, height = viewport
     # focal_distance = 300
     fov = (2 * np.arctan(height / (2 * focal_distance))) * 180 / np.pi
-    print(fov)
+    print("FOV: ", fov)
     gluPerspective(fov, width/float(height), 1, 100.0) # intrinsic camera params
     glMatrixMode(GL_MODELVIEW)
-    return window, obj, clock, Camera(), framebuffer_size
+    return window, obj, clock, Camera()
 
-first_rot = None
-def draw(camera: Camera, obj, window, clock, frame=None, quaternion=None):
-    global first_rot
+def handle_events(window):
     glfw.poll_events()
 
+    if glfw.window_should_close(window):
+        glfw.terminate()
+        sys.exit()
+
+def draw(camera: Camera, obj, window, clock, frame=None, quaternion=None):
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     # If frame is not None, draw the frame as the background
     if frame is not None:
         glLoadIdentity()
         glWindowPos2i(0, 0)
-        buffer_size = glfw.get_framebuffer_size(window)
         frame = np.flip(frame, axis=0)
         # frame = np.concatenate((frame, np.zeros((frame.shape[0], 1), dtype=np.uint8)), axis=1)
+        b_size = buffer_size
         glDrawPixels(*buffer_size, GL_BGR, GL_UNSIGNED_BYTE, frame)
         # clear the depth buffer so that the frame is not occluded
         glClear(GL_DEPTH_BUFFER_BIT)
@@ -161,13 +175,10 @@ def draw(camera: Camera, obj, window, clock, frame=None, quaternion=None):
 
     glfw.swap_buffers(window) # draw the current frame
 
-    width, height = glfw.get_window_size(window)
-    screenshot = glReadPixels(0,0,width,height,GL_BGR,GL_UNSIGNED_BYTE)
+    screenshot = glReadPixels(0,0,*buffer_size,GL_BGR,GL_UNSIGNED_BYTE)
     # glReadBuffer(GL_BACK)
-    snapshot = Image.frombuffer("RGB",(width,height),screenshot,"raw", "RGB", 0, 0)
+    snapshot = Image.frombuffer("RGB",buffer_size,screenshot,"raw", "RGB", 0, 0)
     snapshot = np.array(snapshot)
     snapshot = cv2.flip(snapshot,0)
-
-    clock.tick(60) # limit to 60 fps
 
     return snapshot

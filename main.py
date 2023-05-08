@@ -48,12 +48,12 @@ def main():
     total_Translation = np.array(OBJECT_POSITION)[:, np.newaxis]
 
     # Initialize rasterizer module
-    window, obj, clock, camera, framebuffer_size = rasterize.init(CAMERA_FOCAL_LENGTH, CAMERA_PRINCIPAL_POINT, video_resolution)
+    window, obj, clock, camera = rasterize.init(CAMERA_FOCAL_LENGTH, CAMERA_PRINCIPAL_POINT, video_resolution)
     camera.position = total_Translation
     camera.rotation = total_Rotation
 
     # Resize image to fit the framebuffer
-    image1_resized = cv2.resize(image1, framebuffer_size)
+    image1_resized = cv2.resize(image1, rasterize.buffer_size)
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     width, height = glfw.get_window_size(window)
@@ -67,13 +67,15 @@ def main():
 
     for i in range(SKIP_START + 1, video_frame_count, SKIP_FRAMES):
         frame_number = i
+        rasterize.handle_events(window)
+
         # Load the next frame of the video
         image2 = cv2.imread(f'{IMAGES_FOLDER}/image{frame_number}.png', cv2.IMREAD_COLOR)
         if image2 is None:
             break
 
         # Resize image to fit the framebuffer
-        image2_resized = cv2.resize(image2, framebuffer_size)
+        image2_resized = cv2.resize(image2, rasterize.buffer_size)
 
         # calibrate the images
         R, t = calibrate(image1, image2, focal_length=CAMERA_FOCAL_LENGTH, principal_point=CAMERA_PRINCIPAL_POINT)

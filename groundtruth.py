@@ -9,7 +9,7 @@ import glfw
 import sys
 import math
 
-from rasterize import init, draw
+import rasterize
 from settings import *
 
 def euler_from_quaternion(x, y, z, w):
@@ -61,37 +61,34 @@ def main():
         lines = np.array(lines)
     
     # Initialize rasterizer module
-    window, obj, clock, camera, framebuffer_size = init(CAMERA_FOCAL_LENGTH, CAMERA_PRINCIPAL_POINT, video_resolution)
+    window, obj, clock, camera = rasterize.init(CAMERA_FOCAL_LENGTH, CAMERA_PRINCIPAL_POINT, video_resolution)
 
     _, tx0, ty0, tz0, qx0, qy0, qz0, qw0 = lines[0]
 
     # Draw the first frame
     line_number = 0
     for frame_number in range(0, video_frame_count, SKIP_FRAMES):
+        rasterize.handle_events(window)
         # Load the next frame of the video
-        image = cv2.imread(f'{IMAGES_FOLDER}/image{frame_number}.png', cv2.IMREAD_GRAYSCALE)
+        image = cv2.imread(f'{IMAGES_FOLDER}/image{frame_number}.png')
         if image is None:
             break
 
         # Resize image to fit the framebuffer
-        image = cv2.resize(image, framebuffer_size)
+        image = cv2.resize(image, rasterize.buffer_size)
     
         _, tx, ty, tz, qx, qy, qz, qw = lines[frame_number]
         # Convert the quaternion to euler angles
         rx, ry, rz = euler_from_quaternion(qx, qy, qz, qw)
-        tx -= tx0
-        ty -= ty0
-        tz -= tz0
 
-        scaling_factor = 30
-        # calibrate the images
+        # Translate the objects relative to the first frame
+        tx, ty, tz = tx - tx0, ty - ty0, tz - tz0
+
+        scaling_factor = 30 # This factor will scale the size of the objects
         camera.position = np.array([tx, -ty, -tz]) * scaling_factor
-
-        print(camera.position)
-        # object_transform.rotation = np.array([0., 0., 0.])
         camera.rotation = np.array([rx, rz, -ry])
 
-        draw(camera, obj, window, clock, image)
+        rasterize.draw(camera, obj, window, clock, image)
         clock.tick(20)
 
 if __name__ == "__main__":
