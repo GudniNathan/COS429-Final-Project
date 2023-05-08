@@ -10,6 +10,10 @@ import ffmpeg
 import cv2
 import numpy as np
 
+import glfw
+from PIL import Image
+from OpenGL.GL import *
+
 # Local imports
 from settings import *
 from extrinsic_calibration import calibrate
@@ -51,8 +55,17 @@ def main():
     # Resize image to fit the framebuffer
     image1_resized = cv2.resize(image1, framebuffer_size)
 
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    #Open video output file:
+    width, height = glfw.get_window_size(window)
+    out = cv2.VideoWriter('videoout.mp4',fourcc, 20.0, (width,height))
+
     # Draw the first frame
-    rasterize.draw(camera, obj, window, clock, image1_resized)
+    snapshot = rasterize.draw(camera, obj, window, clock, image1_resized)
+
+    #write frame to video file:
+    out.write(snapshot)
+    # cv2.imwrite(f"{IMAGES_FOLDER}/image{frame_number}.png", snapshot)
 
     for i in range(SKIP_START + 1, video_frame_count, SKIP_FRAMES):
         frame_number = i
@@ -81,10 +94,16 @@ def main():
         print(f"Translation: {total_Translation}")
 
         # Draw the object
-        rasterize.draw(camera, obj, window, clock, image2_resized)
+        snapshot = rasterize.draw(camera, obj, window, clock, image2_resized)
+        
+        #write frame to video file:
+        out.write(snapshot)
+        # cv2.imwrite(f"{IMAGES_FOLDER}/out{frame_number}.png", snapshot)
 
         # Load the next frame of the video
         image1 = image2
+
+    out.release()
     
     shutil.rmtree(IMAGES_FOLDER)
 
