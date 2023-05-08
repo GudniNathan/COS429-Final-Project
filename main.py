@@ -56,16 +56,14 @@ def main():
     image1_resized = cv2.resize(image1, framebuffer_size)
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    #Open video output file:
     width, height = glfw.get_window_size(window)
-    out = cv2.VideoWriter('videoout.mp4',fourcc, 20.0, (width,height))
+    if !os.path.exists(os.path.dirname(OUTPUT_FILE_PATH)):
+        os.mkdir(os.path.dirname(OUTPUT_FILE_PATH))
+    out = cv2.VideoWriter(OUTPUT_FILE_PATH,fourcc, 20.0, (width,height))
 
     # Draw the first frame
     snapshot = rasterize.draw(camera, obj, window, clock, image1_resized)
-
-    #write frame to video file:
     out.write(snapshot)
-    # cv2.imwrite(f"{IMAGES_FOLDER}/image{frame_number}.png", snapshot)
 
     for i in range(SKIP_START + 1, video_frame_count, SKIP_FRAMES):
         frame_number = i
@@ -79,7 +77,6 @@ def main():
 
         # calibrate the images
         R, t = calibrate(image1, image2, focal_length=CAMERA_FOCAL_LENGTH, principal_point=CAMERA_PRINCIPAL_POINT)
-
 
         # Combine the rotation and translation
         R = cv2.Rodrigues(R)[0]
@@ -95,10 +92,7 @@ def main():
 
         # Draw the object
         snapshot = rasterize.draw(camera, obj, window, clock, image2_resized)
-        
-        #write frame to video file:
         out.write(snapshot)
-        # cv2.imwrite(f"{IMAGES_FOLDER}/out{frame_number}.png", snapshot)
 
         # Load the next frame of the video
         image1 = image2
