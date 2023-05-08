@@ -61,7 +61,7 @@ def main():
         lines = np.array(lines)
     
     # Initialize rasterizer module
-    window, obj, clock, object_transform = init(CAMERA_FOCAL_LENGTH, CAMERA_PRINCIPAL_POINT, video_resolution)
+    window, obj, clock, camera, framebuffer_size = init(CAMERA_FOCAL_LENGTH, CAMERA_PRINCIPAL_POINT, video_resolution)
 
     _, tx0, ty0, tz0, qx0, qy0, qz0, qw0 = lines[0]
 
@@ -72,6 +72,9 @@ def main():
         image = cv2.imread(f'{IMAGES_FOLDER}/image{frame_number}.png', cv2.IMREAD_GRAYSCALE)
         if image is None:
             break
+
+        # Resize image to fit the framebuffer
+        image = cv2.resize(image, framebuffer_size)
     
         _, tx, ty, tz, qx, qy, qz, qw = lines[frame_number]
         # Convert the quaternion to euler angles
@@ -82,13 +85,13 @@ def main():
 
         scaling_factor = 30
         # calibrate the images
-        object_transform.position = np.array([tx, -ty, -tz]) * scaling_factor
+        camera.position = np.array([tx, -ty, -tz]) * scaling_factor
 
-        print(object_transform.position)
+        print(camera.position)
         # object_transform.rotation = np.array([0., 0., 0.])
-        object_transform.rotation = np.array([rx, rz, -ry])
+        camera.rotation = np.array([rx, rz, -ry])
 
-        draw(object_transform, obj, window, clock, image)
+        draw(camera, obj, window, clock, image)
         clock.tick(20)
 
 if __name__ == "__main__":

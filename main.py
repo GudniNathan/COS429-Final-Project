@@ -44,13 +44,15 @@ def main():
     total_Translation = np.array(OBJECT_POSITION)[:, np.newaxis]
 
     # Initialize rasterizer module
-    window, obj, clock, object_transform = rasterize.init(CAMERA_FOCAL_LENGTH, CAMERA_PRINCIPAL_POINT, video_resolution)
-    object_transform.tz = 5
-    object_transform.position = total_Translation
-    object_transform.rotation = total_Rotation
+    window, obj, clock, camera, framebuffer_size = rasterize.init(CAMERA_FOCAL_LENGTH, CAMERA_PRINCIPAL_POINT, video_resolution)
+    camera.position = total_Translation
+    camera.rotation = total_Rotation
+
+    # Resize image to fit the framebuffer
+    image1_resized = cv2.resize(image1, framebuffer_size)
 
     # Draw the first frame
-    rasterize.draw(object_transform, obj, window, clock, image1)
+    rasterize.draw(camera, obj, window, clock, image1_resized)
 
     for i in range(SKIP_START + 1, video_frame_count, SKIP_FRAMES):
         frame_number = i
@@ -58,6 +60,9 @@ def main():
         image2 = cv2.imread(f'{IMAGES_FOLDER}/image{frame_number}.png', cv2.IMREAD_GRAYSCALE)
         if image2 is None:
             break
+
+        # Resize image to fit the framebuffer
+        image2_resized = cv2.resize(image2, framebuffer_size)
 
         # calibrate the images
         R, t = calibrate(image1, image2, focal_length=CAMERA_FOCAL_LENGTH, principal_point=CAMERA_PRINCIPAL_POINT)
@@ -68,15 +73,15 @@ def main():
         cv2.composeRT(total_Rotation, total_Translation, R, t, total_Rotation, total_Translation)
 
         # Update the position and rotation of the object
-        object_transform.position = total_Translation
-        object_transform.rotation = total_Rotation
+        camera.position = total_Translation
+        camera.rotation = total_Rotation
 
         # Print the rotation and translation
         print(f"Rotation: {total_Rotation}")
         print(f"Translation: {total_Translation}")
 
         # Draw the object
-        rasterize.draw(object_transform, obj, window, clock, image2)
+        rasterize.draw(camera, obj, window, clock, image2_resized)
 
         # Load the next frame of the video
         image1 = image2

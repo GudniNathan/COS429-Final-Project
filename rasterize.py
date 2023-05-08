@@ -84,6 +84,7 @@ def init(focal_distance, principal_point, video_size=(800, 600)):
     glfw.window_hint(glfw.SAMPLES, 4)
     clock = pygame.time.Clock()
     window = glfw.create_window(*viewport, "OpenGL window", None, None)
+    framebuffer_size = glfw.get_framebuffer_size(window)
     if not window:
         glfw.terminate()
         print("GLFW window creation failed")
@@ -117,7 +118,7 @@ def init(focal_distance, principal_point, video_size=(800, 600)):
     print(fov)
     gluPerspective(fov, width/float(height), 1, 100.0) # intrinsic camera params
     glMatrixMode(GL_MODELVIEW)
-    return window, obj, clock, Camera()
+    return window, obj, clock, Camera(), framebuffer_size
 
 first_rot = None
 def draw(camera: Camera, obj, window, clock, frame=None, quaternion=None):
