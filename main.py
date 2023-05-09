@@ -49,6 +49,8 @@ def main():
     # Initialize rasterizer module
     window, obj, clock, camera = rasterize.init(CAMERA_FOCAL_LENGTH, CAMERA_PRINCIPAL_POINT, video_resolution)
     camera.position = total_Translation
+    # camera.rotation = total_Rotation
+    camera.position = np.array([total_Translation[0], total_Translation[1], total_Translation[2]])[:, np.newaxis]  
     camera.rotation = total_Rotation
 
     # Resize image to fit the framebuffer
@@ -98,8 +100,9 @@ def main():
         cv2.composeRT(total_Rotation, total_Translation, R, t, total_Rotation, total_Translation)
 
         # Update the position and rotation of the object
-        camera.position = total_Translation
-        camera.rotation = total_Rotation
+        # camera.position = total_Translation
+        camera.position = np.array([total_Translation[0], -total_Translation[1], total_Translation[2]])[:, np.newaxis]  
+        camera.rotation = np.array([total_Rotation[0], total_Rotation[1], -total_Rotation[2]])[:, np.newaxis]
 
         # Print the rotation and translation
         print(f"Rotation: {total_Rotation}")

@@ -16,6 +16,7 @@ import cv2
 from PIL import Image
 
 from settings import *
+from itertools import product
 
 
 @dataclass
@@ -137,9 +138,10 @@ def draw(camera: Camera, obj, window, clock, frame=None, quaternion=None):
     rot = rotation_vector_to_matrix(camera.rotation)
     rot = np.linalg.inv(rot)
 
-    from itertools import product
     for i, j, k in product([-2, -1, 0, 1, 2], repeat=3):
         # RENDER OBJECT
+        if i == j == k == 1:
+            continue
         glLoadIdentity()
         pos = -camera.position.T
         glMultMatrixd(rot) # Rotate object
