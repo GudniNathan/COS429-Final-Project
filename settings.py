@@ -4,6 +4,7 @@
 VIDEO_FILE_PATH = "videos/desk_1.mp4"
 OUTPUT_FILE_PATH = "output/desk_1.mp4"
 GROUNDTRUTH_FILE_PATH = "videos/desk_1_groundtruth_interpolated.txt"
+PREDICTED_FILE_PATH = "videos/desk_1_predicted.txt"
 
 IMAGES_FOLDER = "images"
 
