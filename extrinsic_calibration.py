@@ -7,11 +7,12 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
-def calibrate(image1, image2, focal_length=300.0, principal_point=(400.0, 300.0)):
+def calibrate(image1, image2, focal_length=300.0, principal_point=(400.0, 300.0), last_frame_points3D=[]):
     """Determine the position and orientation difference between two images.
     Args
         image1: The first image.
         image2: The second image.
+        last_frame_points3D: the 3D points triangulated from the last pair of images
 
     Returns
     -------
@@ -33,6 +34,9 @@ def calibrate(image1, image2, focal_length=300.0, principal_point=(400.0, 300.0)
     # 4. Feature match 3d points
     # 5. solvePnP
     # That's it!
+
+    R_global = np.eye(3) # initial rotation matrix
+    t_global = np.zeros((3,1)) # initial translation vector
 
     # 1. Find the keypoints and descriptors of image1.
     sift = cv2.SIFT_create()
@@ -105,13 +109,42 @@ def calibrate(image1, image2, focal_length=300.0, principal_point=(400.0, 300.0)
 
     # Find the rotation and translation
 
+    # Triangulate points in 3D
+    proj1 = np.hstack((np.eye(3), np.zeros((3, 1))))
+    proj2 = np.hstack((R, t))
+    points4D = cv2.triangulatePoints(proj1, proj2, points1, points2)
+    points3D = points4D[:3,:] / points4D[3,:]
+    # points3d = cv2.convertPointsFromHomogeneous(points4d.T).reshape(-1, 3)
 
+    # use PPF for feature matching 3d
+    # 1. Create the PPF3DDetector object
+    ppf = cv2.ppf_match_3d_PPF3DDetector(0.025, 0.05)
+    # 2. Train the model
+    ppf.trainModel(points3D)
+    # 3. Find the matches
+    matches = ppf.match(points3D, last_frame_points3D, 0.025, 0.05)
+    # 4. Find the transformation matrix
+    mtx1 = np.array([points3D[m[0].queryIdx] for m in matches])
+    mtx2 = np.array([last_frame_points3D[m[0].trainIdx] for m in matches])
 
-    # Triangulate points
-    projMatr = np.hstack((np.identity(3), np.zeros((3, 1))))
-    # points4D = cv2.triangulatePoints(projMatr, projMatr, points1, points2)
+    # If there are no matches, then just return the rotation and translation or something
+    if len(mtx1) == 0:
+        return R, t
+    
+    # 5. solvePnP
+    retval, rvec, tvec = cv2.solvePnP(mtx2, points2, intrinsic_matrix, np.zeros((5, 1)))
 
-    return R, t
+    R_global = R_global.dot(rvec)
+    t_global = t_global + R_global.dot(tvec)
+
+    R = R_global
+    t = t_global
+
+    # # Triangulate points
+    # projMatr = np.hstack((np.identity(3), np.zeros((3, 1))))
+    # # points4D = cv2.triangulatePoints(projMatr, projMatr, points1, points2)
+
+    return R, t, points3D
 
 def main():
     """Main function."""
