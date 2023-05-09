@@ -34,47 +34,6 @@ def rotation_vector_to_matrix(rotation_vector):
     rot[3, 3] = 1
     return rot
 
-def quaternion_to_matrix(q):
-    """
-    Convert a quaternion to a 4x4 homogeneous rotation matrix.
-
-    :param q: A 4-element array representing the quaternion in the form [w, x, y, z].
-    :return: A 4x4 numpy array representing the rotation matrix.
-    """
-
-    # Normalize the quaternion
-    # q /= np.linalg.norm(q)
-
-    # Extract the components of the quaternion
-    x, y, z, w = q
-
-    # Compute the elements of the rotation matrix
-    m11 = 1 - 2 * (y**2 + z**2)
-    m12 = 2 * (x*y - w*z)
-    m13 = 2 * (x*z + w*y)
-    m14 = 0
-
-    m21 = 2 * (x*y + w*z)
-    m22 = 1 - 2 * (x**2 + z**2)
-    m23 = 2 * (y*z - w*x)
-    m24 = 0
-
-    m31 = 2 * (x*z - w*y)
-    m32 = 2 * (y*z + w*x)
-    m33 = 1 - 2 * (x**2 + y**2)
-    m34 = 0
-
-    m41 = 0
-    m42 = 0
-    m43 = 0
-    m44 = 1
-
-    # Return the rotation matrix
-    return np.array([[m11, m12, m13, m14],
-                     [m21, m22, m23, m24],
-                     [m31, m32, m33, m34],
-                     [m41, m42, m43, m44]])
-
 def window_update(window, width, height):
     global buffer_size
     # Round width, height up to the nearest multiple of 4
@@ -154,18 +113,13 @@ def draw(camera: Camera, obj, window, clock, frame=None, quaternion=None):
         glClear(GL_DEPTH_BUFFER_BIT)
 
 
-    if quaternion:
-        rot = quaternion_to_matrix(quaternion)
-    else:
-        rot = rotation_vector_to_matrix(camera.rotation)
+    rot = rotation_vector_to_matrix(camera.rotation)
     rot = np.linalg.inv(rot)
 
     from itertools import product
     for i, j, k in product([-2, -1, 0, 1, 2], repeat=3):
         # RENDER OBJECT
         glLoadIdentity()
-        # if i == j == k == 0:
-        #     continue
         pos = -camera.position.T
         glMultMatrixd(rot) # Rotate object
         glTranslate(OBJECT_POSITION[0] * i, OBJECT_POSITION[1] * j, OBJECT_POSITION[2] * k) # Move object away from camera
