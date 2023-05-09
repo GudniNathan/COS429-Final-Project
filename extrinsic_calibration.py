@@ -7,7 +7,8 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
-def calibrate(image1, image2, focal_length=300.0, principal_point=(400.0, 300.0), last_frame_points3D=[]):
+last_magnitude = 0.1
+def calibrate(image1, image2, focal_length=300.0, principal_point=(400.0, 300.0), last_frame_points3D=np.zeros(0), last_frame_matches=np.zeros(0)):
     """Determine the position and orientation difference between two images.
     Args
         image1: The first image.
@@ -16,27 +17,14 @@ def calibrate(image1, image2, focal_length=300.0, principal_point=(400.0, 300.0)
 
     Returns
     -------
-        The calibration matrix between the two images.
-
+        The rotation and translation between the two images.
     """
-
-    # Recipe:
-    # Track:
-    # 1. Find the keypoints and descriptors of image1.
-    # 2. Find the keypoints and descriptors of image2.
-    # 3. Match the descriptors of image1 and image2.
-    # 4. Find the essential matrix from the matches.
-    # 5. Recover pose from the essential matrix.
-    # Trace:
-    # 1. Do stereo calibration
-    # 2. Stereo rectify the images
-    # 3. Triangulate points
-    # 4. Feature match 3d points
-    # 5. solvePnP
-    # That's it!
-
-    R_global = np.eye(3) # initial rotation matrix
-    t_global = np.zeros((3,1)) # initial translation vector
+    global last_magnitude
+    image1 = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
+    image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
+    # Flip the images
+    image1 = cv2.flip(image1, 0)
+    image2 = cv2.flip(image2, 0)
 
     # 1. Find the keypoints and descriptors of image1.
     sift = cv2.SIFT_create()
@@ -46,8 +34,6 @@ def calibrate(image1, image2, focal_length=300.0, principal_point=(400.0, 300.0)
     kp2, des2 = sift.detectAndCompute(image2, None)
 
     # 3. Match the descriptors of image1 and image2.
-    # bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-    # matches = bf.match(des1, des2)
     bf = cv2.BFMatcher()
     matches = bf.knnMatch(des1,des2,k=2)
 
@@ -65,8 +51,6 @@ def calibrate(image1, image2, focal_length=300.0, principal_point=(400.0, 300.0)
     points1 = np.float32([kp1[m[0].queryIdx].pt for m in good])
     points2 = np.float32([kp2[m[0].trainIdx].pt for m in good])
     
-    # mat, mask = cv2.findFundamentalMat(points1, points2, cv2.FM_RANSAC)
-
     intrinsic_matrix = np.array([[focal_length, 0, principal_point[0]],
                                  [0, focal_length, principal_point[1]],
                                  [0, 0, 1]])
@@ -75,36 +59,10 @@ def calibrate(image1, image2, focal_length=300.0, principal_point=(400.0, 300.0)
 
     retval, R, t, mask = cv2.recoverPose(E, points1, points2, focal=focal_length, pp=principal_point)
 
-    # Do stereo calibration
-    # retval, intrinsic_matrix, distCoeffs, rvecs, tvecs = cv2.calibrateCamera([points1], [points2], image1.shape[::-1], None, None)
-
-    image1 = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
-    image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
+    return R, t, last_frame_points3D, good
 
     # Stereo rectify the images
     R1, R2, P1, P2, Q, roi1, roi2 = cv2.stereoRectify(intrinsic_matrix, np.zeros((5, 1)), intrinsic_matrix, np.zeros((5, 1)), image1.shape[::-1], R, t, alpha=0.0)
-
-    # Undistort the images
-    # map1x, map1y = cv2.initUndistortRectifyMap(intrinsic_matrix, np.zeros((5, 1)), R1, P1, image1.shape[::-1], cv2.CV_32FC1)
-    # map2x, map2y = cv2.initUndistortRectifyMap(intrinsic_matrix, np.zeros((5, 1)), R2, P2, image1.shape[::-1], cv2.CV_32FC1)
-
-    # image1 = cv2.remap(image1, map1x, map1y, cv2.INTER_LINEAR)
-    # image2 = cv2.remap(image2, map2x, map2y, cv2.INTER_LINEAR)
-
-    # plt.imshow(image1)
-    # plt.show()
-    # plt.imshow(image2)
-    # plt.show()
-
-    # Find the disparity
-    stereo = cv2.StereoBM_create(numDisparities=16, blockSize=15)
-    disparity = stereo.compute(image1, image2)
-
-    # plt.imshow(disparity)
-    # plt.show()
-
-    # Find the depth
-    depth = cv2.reprojectImageTo3D(disparity, Q)
 
 
     # Find the rotation and translation
@@ -112,39 +70,57 @@ def calibrate(image1, image2, focal_length=300.0, principal_point=(400.0, 300.0)
     # Triangulate points in 3D
     proj1 = np.hstack((np.eye(3), np.zeros((3, 1))))
     proj2 = np.hstack((R, t))
-    points4D = cv2.triangulatePoints(proj1, proj2, points1, points2)
+    points4D = cv2.triangulatePoints(proj1, proj2, points1.T, points2.T)
     points3D = points4D[:3,:] / points4D[3,:]
-    # points3d = cv2.convertPointsFromHomogeneous(points4d.T).reshape(-1, 3)
+    points3D = points3D.T
+    original_3D_points = points3D
 
-    # use PPF for feature matching 3d
-    # 1. Create the PPF3DDetector object
-    ppf = cv2.ppf_match_3d_PPF3DDetector(0.025, 0.05)
-    # 2. Train the model
-    ppf.trainModel(points3D)
-    # 3. Find the matches
-    matches = ppf.match(points3D, last_frame_points3D, 0.025, 0.05)
-    # 4. Find the transformation matrix
-    mtx1 = np.array([points3D[m[0].queryIdx] for m in matches])
-    mtx2 = np.array([last_frame_points3D[m[0].trainIdx] for m in matches])
+    if last_frame_points3D.size == 0:
+        last_frame_points3D = points3D
+        last_frame_matches = good
+        points0 = points1
+    else:
+        points0 = np.float32([kp1[m[0].trainIdx].pt for m in last_frame_matches])
 
-    # If there are no matches, then just return the rotation and translation or something
-    if len(mtx1) == 0:
-        return R, t
+    # Get the intersection of points0 and points1
+    intersection = points0[np.isin(points0, points1).all(axis=1)]
+    intersection2 = points1[np.isin(points1, points0).all(axis=1)]
+
+    # Remove duplicate points
+    intersection = np.unique(intersection, axis=0, return_index=True)[1]
+    intersection2 = np.unique(intersection2, axis=0, return_index=True)[1]
+
+
+    assert len(intersection) == len(intersection2)
+    
+
+    # Get the corresponding 3d points from the last frame
+    last_frame_points3D = last_frame_points3D[intersection]
+    points3D = points3D[intersection2]
+    # Find the keypoints that were matched in both the last frame and this frame
+    # points0 = points0[np.isin(points0, points1).all(axis=1)]
+
+    
+
+    # use estimateAffine3D for feature matching 3d
+    retval, affine_transform, inliers = cv2.estimateAffine3D(last_frame_points3D, points3D)
+
+    # If there are no or few inliers, then just return the rotation and translation or something
+    if np.sum(inliers) <= 6 or retval == 0:
+        return R, t, original_3D_points, good
+
+    # Get all the inliers, multiply them by the affine transform, and then use them to find the rotation and translation
+    points3D = points3D[inliers[:, 0] == 1]
+    rotatation = affine_transform[:, :3]
+    translation = affine_transform[:, 3] 
+    points3D = points3D.dot(rotatation.T) + translation
+
     
     # 5. solvePnP
-    retval, rvec, tvec = cv2.solvePnP(mtx2, points2, intrinsic_matrix, np.zeros((5, 1)))
+    # retval, rvec, tvec = cv2.solvePnP(points3D, points2[intersection2][inliers[:, 0] == 1], intrinsic_matrix, np.zeros((5, 1)))
 
-    R_global = R_global.dot(rvec)
-    t_global = t_global + R_global.dot(tvec)
 
-    R = R_global
-    t = t_global
-
-    # # Triangulate points
-    # projMatr = np.hstack((np.identity(3), np.zeros((3, 1))))
-    # # points4D = cv2.triangulatePoints(projMatr, projMatr, points1, points2)
-
-    return R, t, points3D
+    return R, t, original_3D_points, good
 
 def main():
     """Main function."""

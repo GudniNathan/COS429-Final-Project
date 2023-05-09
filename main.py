@@ -69,7 +69,9 @@ def main():
         lines = truth_file.readlines()
         timestamps = [line.split()[0] for line in lines]
 
-    pred = []    
+    pred = []
+    points3D = np.array([])
+    matches = np.array([])
     for i in range(SKIP_START + 1, video_frame_count, SKIP_FRAMES):
         frame_number = i
         rasterize.handle_events(window)
@@ -83,7 +85,13 @@ def main():
         image2_resized = cv2.resize(image2, rasterize.buffer_size)
 
         # calibrate the images
-        R, t = calibrate(image1, image2, focal_length=CAMERA_FOCAL_LENGTH, principal_point=CAMERA_PRINCIPAL_POINT)
+        R, t, points3D, matches = calibrate(
+            image1, image2, 
+            focal_length=CAMERA_FOCAL_LENGTH,
+            principal_point=CAMERA_PRINCIPAL_POINT,
+            last_frame_points3D=points3D,
+            last_frame_matches=matches
+        )
 
         # Combine the rotation and translation
         R = cv2.Rodrigues(R)[0]
@@ -102,14 +110,15 @@ def main():
         out.write(snapshot)
         # cv2.imwrite("test.jpg", snapshot)
 
-        tx, ty, tz = (total_Translation[0][0], total_Translation[1][0], total_Translation[2][0])
+        tx, ty, tz = (total_Translation[0][0], -total_Translation[2][0], -total_Translation[1][0])
         rot = rasterize.rotation_vector_to_matrix(total_Rotation)
         qx, qy, qz, qw = rasterize.matrix_to_quaternion(rot)
-
-        pred.append(f"{timestamps[frame_number]} {tx} {ty} {tz} {qx} {qy} {qz} {qw}\n")
+        timestamp = timestamps[frame_number] if frame_number < len(timestamps) else timestamps[-1]
+        pred.append(f"{timestamp} {tx} {ty} {tz} {qx} {qy} {qz} {qw}\n")
 
         # Load the next frame of the video
         image1 = image2
+        clock.tick(60)
 
     with open(PREDICTED_FILE_PATH, "w+") as pred_file:
         pred_file.writelines(pred)

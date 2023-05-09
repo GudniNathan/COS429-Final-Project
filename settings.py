@@ -18,7 +18,7 @@ CAMERA_PRINCIPAL_POINT = (319.5, 239.5)
 
 
 # The number of frames to skip between each frame.
-SKIP_FRAMES = 5
+SKIP_FRAMES = 2
 
 # The number of frames to skip at the beginning of the video.
 SKIP_START = 5
