@@ -1,10 +1,12 @@
 
 # This file contains all the settings.
 # Update this file to change the settings of the program.
-VIDEO_FILE_PATH = "videos/desk_1.mp4"
-OUTPUT_FILE_PATH = "output/desk_1.mp4"
-GROUNDTRUTH_FILE_PATH = "videos/desk_1_groundtruth_interpolated.txt"
-PREDICTED_FILE_PATH = "videos/desk_1_predicted.txt"
+VIDEO_NAME = "360"
+VIDEO_FILE_PATH = f"videos/{VIDEO_NAME}.mp4"
+OUTPUT_FILE_PATH = f"output/{VIDEO_NAME}.mp4"
+GROUNDTRUTH_FILE_PATH = f"videos/{VIDEO_NAME}_groundtruth_interpolated.txt"
+FRAME_DATA_FILE_PATH = f"dataset_management/{VIDEO_NAME}_rgb.txt"
+PREDICTED_FILE_PATH = f"videos/{VIDEO_NAME}_predicted.txt"
 
 IMAGES_FOLDER = "images"
 
