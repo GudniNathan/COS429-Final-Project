@@ -34,6 +34,27 @@ def rotation_vector_to_matrix(rotation_vector):
     rot[3, 3] = 1
     return rot
 
+def matrix_to_quaternion(m):
+    if m[2,2] < 0:
+        if m[0,0] > m[1,1]:
+            t = 1 + m[0,0] - m[1,1] - m[2,2]
+            q = (t, m[0,1] + m[1,0], m[2,0] + m[0,2], m[1,2] - m[2,1])
+        else:
+            t = 1 - m[0,0] + m[1,1] - m[2,2]
+            q = (m[0,1] + m[1,0], t, m[1,2] + m[2,1], m[2,0] - m[0,2])
+    else:
+        if m[0,0] < -m[1,1]:
+            t = 1 - m[0,0] - m[1,1] + m[2,2]
+            q = (m[2,0] + m[0,2], m[1,2] + m[2,1], t, m[0,1] - m[1,0])
+        else:
+            t = 1 + m[0,0] + m[1,1] + m[2,2]
+            q = (m[1,2] - m[2,1], m[2,0] - m[0,2], m[0,1] - m[1,0], t)
+
+    q = np.array(q)
+    q *= 0.5 / np.sqrt(t)
+
+    return q
+
 def window_update(window, width, height):
     global buffer_size
     # Round width, height up to the nearest multiple of 4
