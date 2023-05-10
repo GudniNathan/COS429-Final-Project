@@ -143,10 +143,11 @@ def draw(camera: Camera, obj, window, clock, frame=None, quaternion=None):
     rot = rotation_vector_to_matrix(camera.rotation)
     rot = np.linalg.inv(rot)
 
-    for i, j, k in product([-2, -1, 0, 1, 2], repeat=3):
+    grid_positions = [-2, -1, 0, 1, 2]
+    if not OBJECT_GRID:
+        grid_positions = [1]
+    for i, j, k in product(grid_positions, repeat=3):
         # RENDER OBJECT
-        if i == j == k == 1:
-            continue
         glLoadIdentity()
         pos = -camera.position.T
         glMultMatrixd(rot) # Rotate object
