@@ -321,12 +321,17 @@ if __name__ == '__main__':
     parser.add_argument('--scale', help='scaling factor for the estimated trajectory (default: 1.0)',default=1.0)
     parser.add_argument('--save', help='text file to which the evaluation will be saved (format: stamp_est0 stamp_est1 stamp_gt0 stamp_gt1 trans_error rot_error)')
     parser.add_argument('--plot', help='plot the result to a file (requires --fixed_delta, output format: png)')
+    parser.add_argument('--video_file')
     parser.add_argument('--verbose', help='print all evaluation data (otherwise, only the mean translational error measured in meters will be printed)', action='store_true')
     args = parser.parse_args()
     
     if args.plot and not args.fixed_delta:
         sys.exit("The '--plot' option can only be used in combination with '--fixed_delta'")
-    
+
+    if args.video_file:
+        args.groundtruth_file = f"./videos/{args.video_file}_groundtruth_interpolated.txt"
+        args.estimated_file = f"./videos/{args.video_file}_predicted.txt"
+
     traj_gt = read_trajectory(args.groundtruth_file)
     traj_est = read_trajectory(args.estimated_file)
     
@@ -375,8 +380,12 @@ if __name__ == '__main__':
         #ax.plot([t for t,e in err_rot],[e for t,e in err_rot],'-',color="red")
         ax.set_xlabel('time [s]')
         ax.set_ylabel('translational error [m]')
+        # print(args.groundtruth_file)
+        video_name = args.groundtruth_file.split('/')[2].rstrip("_groundtruth_interpolated.txt")
+        ax.set_title(video_name)
         plt.show()
-        plt.savefig(args.plot,dpi=300)
+        plt.savefig(f"{video_name}.png",dpi=300)
+        # plt.savefig(args.plot,dpi=300)
         
 
 
