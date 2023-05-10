@@ -13,7 +13,7 @@ FRAME_DATA_FILE_PATH = f"dataset_management/{VIDEO_NAME}_rgb.txt"
 with open(GROUNDTRUTH_FILE_PATH, 'r') as f:
     lines = f.readlines()
     lines = [line.strip().split() for line in lines]
-    # lines = lines[3:]
+    lines = lines[3:]
     lines = [[float(x) for x in line] for line in lines]
     # round to 6 decimal places
     lines = [[round(x, 6) for x in line] for line in lines]
@@ -23,7 +23,7 @@ with open(GROUNDTRUTH_FILE_PATH, 'r') as f:
 with open(FRAME_DATA_FILE_PATH, 'r') as f:
     lines2 = f.readlines()
     lines2 = [line.strip().split() for line in lines2]
-    # lines2 = lines2[3:]
+    lines2 = lines2[3:]
     lines2 = [float(line[0]) for line in lines2]
     lines2 = np.array(lines2)
 

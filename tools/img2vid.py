@@ -2,6 +2,7 @@
 import os
 import shutil
 import ffmpeg
+from settings import VIDEO_NAME
 
 IMAGES_FOLDER = "../images"
 OUTPUT_FOLDER = "../videos"
@@ -23,7 +24,8 @@ for i, img in enumerate(images):
 
 # User input for the frame rate, file name
 fps = int(input("Enter the frame rate: "))
-file_name = input("Enter the file name: ")
+# file_name = input("Enter the file name: ")
+file_name = VIDEO_NAME
 
 # If file is missing extension, add .mp4
 if "." not in file_name:
