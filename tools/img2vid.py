@@ -1,7 +1,8 @@
 """This script will convert a folder of images into a video."""
-import os
+import os, sys
 import shutil
 import ffmpeg
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from settings import VIDEO_NAME
 
 IMAGES_FOLDER = "../images"
