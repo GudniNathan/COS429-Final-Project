@@ -97,11 +97,12 @@ def main():
 
         # Combine the rotation and translation
         R = cv2.Rodrigues(R)[0]
+        t = np.array([-t[0], t[1], t[2]])[:, np.newaxis]
         cv2.composeRT(total_Rotation, total_Translation, R, t, total_Rotation, total_Translation)
 
         # Update the position and rotation of the object
         # camera.position = total_Translation
-        camera.position = np.array([total_Translation[0], -total_Translation[1], total_Translation[2]])[:, np.newaxis]  
+        camera.position = np.array([total_Translation[0], total_Translation[1], total_Translation[2]])[:, np.newaxis] * 0.5  
         camera.rotation = np.array([total_Rotation[0], total_Rotation[1], -total_Rotation[2]])[:, np.newaxis]
 
         # Print the rotation and translation
@@ -114,7 +115,8 @@ def main():
         # cv2.imwrite("test.jpg", snapshot)
 
         tx, ty, tz = (total_Translation[0][0], -total_Translation[2][0], -total_Translation[1][0])
-        rot = rasterize.rotation_vector_to_matrix(total_Rotation)
+        rx, ry, rz = (total_Rotation[0], total_Rotation[1], total_Rotation[2])
+        rot = rasterize.rotation_vector_to_matrix(np.array([rx, rz, ry]))
         qx, qy, qz, qw = rasterize.matrix_to_quaternion(rot)
         timestamp = timestamps[frame_number] if frame_number < len(timestamps) else timestamps[-1]
         pred.append(f"{timestamp} {tx} {ty} {tz} {qx} {qy} {qz} {qw}\n")

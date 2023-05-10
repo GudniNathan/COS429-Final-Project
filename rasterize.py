@@ -35,6 +35,11 @@ def rotation_vector_to_matrix(rotation_vector):
     rot[3, 3] = 1
     return rot
 
+def rotation_vector_to_quaternion(rotation_vector):
+    rotation_vector = np.array([-rotation_vector[0], -rotation_vector[1], -rotation_vector[2]])
+    rot = cv2.Rodrigues(rotation_vector)[0]
+    return matrix_to_quaternion(rot)
+
 def matrix_to_quaternion(m):
     if m[2,2] < 0:
         if m[0,0] > m[1,1]:
