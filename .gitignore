@@ -1,8 +1,6 @@
 # Custom
 .DS_Store
 images/
-output/
-videoout.mp4
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
